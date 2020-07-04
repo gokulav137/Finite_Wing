@@ -11,6 +11,7 @@ class FiniteWing:
         assert span > 0, "span value should be greater than 0"
         self.span = span
         self.no_seg = None
+        self.no_freq = None
         self.cord_pts = None
         self.seg_pts = None
         self.M = None
@@ -18,9 +19,11 @@ class FiniteWing:
         self.M_inv = None
         self.A = None
 
-    def solve(self, alpha=0, no_seg=40):
+    def solve(self, alpha=0, no_seg=40, no_freq=40):
         assert no_seg > 0, "no_seg value should be greater than 0"
+        assert no_seg >= no_freq, "no_seg value should be greater or equal to no_freq"
         self.no_seg = no_seg
+        self.no_freq = no_freq
         self.seg_pts = self.get_pts(self.no_seg)
         self.M = self.get_m(self.seg_pts)
         self.inv_m()
@@ -38,13 +41,12 @@ class FiniteWing:
     def get_m(self, pts):
         sin_vals = np.sin(pts).reshape(-1, 1)
         sinn_vals = self.get_sinn(pts)
-        print(np.min(np.abs(sinn_vals)))
         a0, _, c = self.w_type.get_variables(self.no_seg, self.cord_pts, self.mid_chord, self.span)
-        m = sinn_vals*2*self.span+(np.divide(sinn_vals, sin_vals)*(0.5*a0*c).reshape(-1, 1))*np.arange(1, self.no_seg+1)
+        m = sinn_vals*2*self.span+(np.divide(sinn_vals, sin_vals)*(0.5*a0*c).reshape(-1, 1))*np.arange(1, self.no_freq+1)
         return m
 
     def get_sinn(self, pts):
-        thetan_vals = np.outer(pts, np.arange(1, self.no_seg + 1))
+        thetan_vals = np.outer(pts, np.arange(1, self.no_freq + 1))
         return np.sin(thetan_vals)
 
     def inv_m(self):
@@ -96,7 +98,7 @@ class SimpleElliptical:
     def update_c(self, pts, mid_chord, span):
         self.c = mid_chord*np.sqrt(1-4*np.square(pts/span))
 
-    def update_alpha0(self, n=40):
+    def update_alpha0(self, n):
         self.alpha0 = self.alpha0_val*np.ones((1, n))
 
     def get_analytical(self, alpha, pts, mid_chord, span, v_inf=10, sharpness=100):
@@ -163,7 +165,7 @@ def plot_a(dataset, wing_type, legends=None):
 
 
 W_elliptic = FiniteWing(SimpleElliptical(a0_val=2*np.pi, alpha0_val=0))
-W_elliptic.solve(alpha=5*np.pi/180, no_seg=40)
+W_elliptic.solve(alpha=5*np.pi/180, no_seg=1000, no_freq=40)
 
 num_gamma = W_elliptic.simulate(v_inf=10, sharpness=40)
 ana_gamma = W_elliptic.simulate_analytical(v_inf=10, sharpness=40, alpha=5*np.pi/180)
@@ -179,7 +181,7 @@ data_a = []
 
 for i, tr in enumerate([1, 2, 3]):
     W_tapered.append(FiniteWing(SimpleTapered(t_ratio=tr, a0_val=2 * np.pi, alpha0_val=0)))
-    W_tapered[i].solve(alpha=5*np.pi/180, no_seg=40)
+    W_tapered[i].solve(alpha=5*np.pi/180, no_seg=100, no_freq=40)
     data_gamma.append(W_tapered[i].simulate(v_inf=10, sharpness=40))
     data_a.append(W_tapered[i].get_a()[:10])
 cord_pts = W_tapered[0].calc_cord_pts(n=40)
