@@ -42,7 +42,8 @@ class FiniteWing:
         sin_vals = np.sin(pts).reshape(-1, 1)
         sinn_vals = self.get_sinn(pts)
         a0, _, c = self.w_type.get_variables(self.no_seg, self.cord_pts, self.mid_chord, self.span)
-        m = sinn_vals*2*self.span+(np.divide(sinn_vals, sin_vals)*(0.5*a0*c).reshape(-1, 1))*np.arange(1, self.no_freq+1)
+        m = sinn_vals*2*self.span+(np.divide(sinn_vals, sin_vals)*(0.5*a0*c).reshape(-1, 1))*np.arange(1,
+                                                                                                       self.no_freq+1)
         return m
 
     def get_sinn(self, pts):
@@ -51,7 +52,6 @@ class FiniteWing:
 
     def inv_m(self):
         self.M_inv = scipy.linalg.pinv(self.M)
-        print(np.linalg.cond(self.M))
 
     def update_rhs(self, alpha):
         a0, alpha0, c = self.w_type.get_variables(self.no_seg, self.cord_pts, self.mid_chord, self.span)
@@ -59,13 +59,6 @@ class FiniteWing:
 
     def update_a(self):
         self.A = np.dot(self.M_inv, self.rhs.reshape(-1))
-        #self.A = scipy.linalg.solve(self.M, self.rhs.reshape(-1))
-        A2=np.dot(scipy.linalg.pinv(self.M[:,:10]), self.rhs.reshape(-1))
-        print((np.sum((np.dot(self.M,self.A)-self.rhs.reshape(-1))**2))**.5,(np.sum((np.dot(self.M[:,:10],A2)-self.rhs.reshape(-1))**2))**.5)
-        """self.A=self.A*0
-        self.A[::2] = np.dot(self.M_inv, self.rhs.reshape(-1))
-        print(self.A)
-        print((np.sum((np.dot(self.M,self.A)-self.rhs.reshape(-1))**2))**.5)"""
 
     def simulate(self, v_inf=10, sharpness=100):
         assert sharpness > 0, "sharpness value should be greater than 0"
